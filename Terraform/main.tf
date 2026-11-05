@@ -76,7 +76,7 @@ resource "oci_core_instance" "vm" {
     for_each = var.shape == "VM.Standard.A1.Flex" ? [1] : []
     content {
       ocpus         = 1
-      memory_in_gbs = 6
+      memory_in_gbs = 2
     }
   }
 
