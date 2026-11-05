@@ -10,7 +10,7 @@ El [repositorio del video](https://github.com/RekhuGopal/OracleCloudInfrastructu
 2. Un bucket de Object Storage **ya creado**, preferiblemente con versionado activado. Anota su nombre y el namespace de Object Storage. El workflow crea el objeto de estado automáticamente en `autoaprendizaje1/terraform.tfstate`.
 3. Una clave API OCI: registra la **clave pública API** en el perfil del usuario de OCI; conserva su PEM privada para el secreto `OCI_PRIVATE_KEY`. Esta clave API es distinta de la clave SSH de acceso a la VM.
 4. Una clave SSH propia. Se usa solo su parte pública en `OCI_SSH_PUBLIC_KEY`. El CIDR `OCI_SSH_SOURCE_CIDR` debe limitar el puerto 22 a tu IP pública (`x.x.x.x/32`).
-5. Un OCID de imagen OCI compatible con la región y el shape. El shape predeterminado es `VM.Standard.E2.1.Micro`; verifica disponibilidad y posibles cargos en tu tenancy antes de aplicar.
+5. Una imagen OCI compatible con la región y el shape. El workflow usa Oracle Linux 8.10 ARM en São Paulo y `VM.Standard.A1.Flex` con 1 OCPU y 6 GB; verifica la disponibilidad y los límites Always Free de tu tenancy antes de aplicar.
 6. Un repositorio GitHub propio para publicar estos archivos. Terraform CLI `>= 1.12, < 1.17` para uso local.
 
 ## Configuración de GitHub Actions
@@ -27,13 +27,14 @@ En **Settings → Secrets and variables → Actions → Repository secrets** del
 | `OCI_STATE_BUCKET` | Nombre del bucket del estado. |
 | `OCI_STATE_NAMESPACE` | Namespace de Object Storage. |
 | `OCI_PARENT_COMPARTMENT_OCID` | OCID del tenancy o compartment padre. |
-| `OCI_IMAGE_OCID` | OCID de la imagen para esa región y ese shape. |
 | `OCI_SSH_PUBLIC_KEY` | Una línea de clave **pública** SSH. |
 | `OCI_SSH_SOURCE_CIDR` | IP autorizada para SSH, por ejemplo `203.0.113.10/32`. |
 
 No subas PEM privados, `terraform.tfvars`, archivos `.tfstate` ni planes al repositorio. Si usas una clave API con frase de paso, esta configuración debe ampliarse para proporcionarla de forma segura; actualmente espera una clave sin frase de paso.
 
-La configuración de la VM usa el primer availability domain devuelto por OCI. Si el shape o la imagen no están disponibles allí, ajusta la región, la imagen o el shape antes del despliegue. Para cambiar el shape en GitHub Actions, añade `TF_VAR_shape` como variable de entorno al workflow o modifica el valor predeterminado de `Terraform/variables.tf`.
+El secreto `OCI_IMAGE_OCID` creado para la imagen x86 original ya no se usa en el workflow A1; puedes conservarlo para volver a E2 en el futuro.
+
+La configuración de la VM usa el primer availability domain devuelto por OCI. Tras un error de capacidad al crear `VM.Standard.E2.1.Micro` en São Paulo, el workflow usa `VM.Standard.A1.Flex` con 1 OCPU y 6 GB de RAM, más una imagen ARM de Oracle Linux 8.10 para `sa-saopaulo-1`. Estos valores se fijan en `.github/workflows/oci.yml`; ajusta tanto el shape como la imagen al cambiar de región o arquitectura. La configuración de `shape_config` en `Terraform/main.tf` se aplica solo a A1 Flex. La disponibilidad de host sigue dependiendo de OCI.
 
 ## Despliegue desde GitHub
 
