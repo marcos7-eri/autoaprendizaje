@@ -1,0 +1,85 @@
+name: OCI con Terraform
+
+on:
+  workflow_dispatch:
+    inputs:
+      operation:
+        description: "plan para revisar o apply para desplegar"
+        type: choice
+        required: true
+        default: plan
+        options:
+          - plan
+          - apply
+
+permissions:
+  contents: read
+
+concurrency:
+  group: oci-terraform-state
+  cancel-in-progress: false
+
+jobs:
+  infrastructure:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Terraform
+        shell: bash
+    env:
+      OCI_USER_OCID: ${{ secrets.OCI_USER_OCID }}
+      OCI_TENANCY_OCID: ${{ secrets.OCI_TENANCY_OCID }}
+      OCI_FINGERPRINT: ${{ secrets.OCI_FINGERPRINT }}
+      OCI_REGION: ${{ secrets.OCI_REGION }}
+      OCI_PRIVATE_KEY: ${{ secrets.OCI_PRIVATE_KEY }}
+      OCI_STATE_BUCKET: ${{ secrets.OCI_STATE_BUCKET }}
+      OCI_STATE_NAMESPACE: ${{ secrets.OCI_STATE_NAMESPACE }}
+      TF_VAR_parent_compartment_ocid: ${{ secrets.OCI_PARENT_COMPARTMENT_OCID }}
+      TF_VAR_image_ocid: ${{ secrets.OCI_IMAGE_OCID }}
+      TF_VAR_ssh_public_key: ${{ secrets.OCI_SSH_PUBLIC_KEY }}
+      TF_VAR_ssh_source_cidr: ${{ secrets.OCI_SSH_SOURCE_CIDR }}
+      TF_IN_AUTOMATION: "true"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Instalar Terraform
+        uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: 1.16.6
+          terraform_wrapper: false
+
+      - name: Configurar autenticación OCI
+        run: |
+          set -euo pipefail
+          for name in OCI_USER_OCID OCI_TENANCY_OCID OCI_FINGERPRINT OCI_REGION OCI_PRIVATE_KEY OCI_STATE_BUCKET OCI_STATE_NAMESPACE TF_VAR_parent_compartment_ocid TF_VAR_image_ocid TF_VAR_ssh_public_key TF_VAR_ssh_source_cidr; do
+            if [ -z "${!name:-}" ]; then
+              echo "Falta el secreto: $name" >&2
+              exit 1
+            fi
+          done
+          umask 077
+          mkdir -p "$HOME/.oci"
+          printf '%s\n' "$OCI_PRIVATE_KEY" > "$HOME/.oci/key.pem"
+          {
+            printf '[DEFAULT]\n'
+            printf 'user=%s\n' "$OCI_USER_OCID"
+            printf 'fingerprint=%s\n' "$OCI_FINGERPRINT"
+            printf 'tenancy=%s\n' "$OCI_TENANCY_OCID"
+            printf 'region=%s\n' "$OCI_REGION"
+            printf 'key_file=%s\n' "$HOME/.oci/key.pem"
+          } > "$HOME/.oci/config"
+
+      - name: Terraform init
+        run: terraform init -input=false -backend-config="bucket=${OCI_STATE_BUCKET}" -backend-config="namespace=${OCI_STATE_NAMESPACE}"
+
+      - name: Terraform validate
+        run: terraform validate -no-color
+
+      - name: Terraform plan
+        run: terraform plan -input=false -no-color -out=deploy.tfplan
+
+      - name: Terraform apply
+        if: inputs.operation == 'apply'
+        run: terraform apply -input=false -no-color -auto-approve deploy.tfplan
+
