@@ -49,11 +49,11 @@ La configuración de la VM usa el primer availability domain devuelto por OCI. T
    ```
 
    Git requiere que tu nombre y correo de autor estén configurados para crear el commit. Sustituye la URL por la de tu repositorio propio.
-2. Abre **Actions → OCI con Terraform → Run workflow** y elige `plan`. Revisa la creación prevista.
-3. Ejecuta el mismo workflow con `apply`. El job reutiliza el plan generado en esa misma ejecución y aplica los recursos.
+2. Cada push a `main` ejecuta automáticamente `terraform init`, `validate`, `plan` y `apply`. El plan se genera y se aplica dentro de la misma ejecución.
+3. Para revisar sin aplicar, abre **Actions → OCI con Terraform → Run workflow** y elige `plan`. Para desplegar manualmente, elige `apply`.
 4. En OCI, verifica el compartment `autoaprendizaje1`, la VCN y la VM. La IP pública también aparece como output de Terraform en el estado.
 
-El workflow es manual y serializa las ejecuciones sobre el mismo estado. No ejecuta `destroy`. Para cambiar configuraciones después del primer despliegue, modifica variables y ejecuta `plan` antes de `apply`.
+El workflow serializa las ejecuciones sobre el mismo estado y no ejecuta `destroy`. Los pushes a otras ramas no despliegan. Terraform usa el proveedor y el backend de OCI directamente; no necesita instalar OCI CLI en el runner. Si OCI devuelve `Out of host capacity`, la VM queda pendiente en el estado y un futuro push a `main` o una ejecución manual con `apply` volverá a intentarlo.
 
 ## Verificación local
 
