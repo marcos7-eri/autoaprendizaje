@@ -73,10 +73,10 @@ resource "oci_core_instance" "vm" {
   shape               = var.shape
 
   dynamic "shape_config" {
-    for_each = var.shape == "VM.Standard.A1.Flex" ? [1] : []
+    for_each = contains(["VM.Standard.A1.Flex", "VM.Standard.E4.Flex"], var.shape) ? [1] : []
     content {
-      ocpus         = 1
-      memory_in_gbs = 2
+      ocpus         = var.vm_ocpus
+      memory_in_gbs = var.vm_memory_in_gbs
     }
   }
 

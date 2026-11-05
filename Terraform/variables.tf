@@ -30,6 +30,28 @@ variable "shape" {
   default     = "VM.Standard.E2.1.Micro"
 }
 
+variable "vm_ocpus" {
+  description = "Cantidad de OCPUs para un shape Flex."
+  type        = number
+  default     = 1
+
+  validation {
+    condition     = var.vm_ocpus >= 1
+    error_message = "Un shape Flex debe usar al menos 1 OCPU."
+  }
+}
+
+variable "vm_memory_in_gbs" {
+  description = "Memoria en GB para un shape Flex."
+  type        = number
+  default     = 1
+
+  validation {
+    condition     = var.vm_memory_in_gbs >= 1
+    error_message = "Un shape Flex debe usar al menos 1 GB de memoria."
+  }
+}
+
 variable "ssh_public_key" {
   description = "Contenido de la clave pública SSH que accederá a la VM."
   type        = string

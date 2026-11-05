@@ -10,7 +10,7 @@ El [repositorio del video](https://github.com/RekhuGopal/OracleCloudInfrastructu
 2. Un bucket de Object Storage **ya creado**, preferiblemente con versionado activado. Anota su nombre y el namespace de Object Storage. El workflow crea el objeto de estado automáticamente en `autoaprendizaje1/terraform.tfstate`.
 3. Una clave API OCI: registra la **clave pública API** en el perfil del usuario de OCI; conserva su PEM privada para el secreto `OCI_PRIVATE_KEY`. Esta clave API es distinta de la clave SSH de acceso a la VM.
 4. Una clave SSH propia. Se usa solo su parte pública en `OCI_SSH_PUBLIC_KEY`. El CIDR `OCI_SSH_SOURCE_CIDR` debe limitar el puerto 22 a tu IP pública (`x.x.x.x/32`).
-5. Una imagen OCI compatible con la región y el shape. El workflow usa Oracle Linux 8.10 ARM en São Paulo y `VM.Standard.A1.Flex` con 1 OCPU y 2 GB; verifica la disponibilidad y los límites Always Free de tu tenancy antes de aplicar.
+5. Una imagen OCI x86 compatible con la región. El workflow usa la imagen definida en el secreto `OCI_IMAGE_OCID` y `VM.Standard.E4.Flex` con 1 OCPU y 1 GB de RAM. Esta VM es de pago: elimínala al terminar la práctica.
 6. Un repositorio GitHub propio para publicar estos archivos. Terraform CLI `>= 1.12, < 1.17` para uso local.
 
 ## Configuración de GitHub Actions
@@ -32,9 +32,7 @@ En **Settings → Secrets and variables → Actions → Repository secrets** del
 
 No subas PEM privados, `terraform.tfvars`, archivos `.tfstate` ni planes al repositorio. Si usas una clave API con frase de paso, esta configuración debe ampliarse para proporcionarla de forma segura; actualmente espera una clave sin frase de paso.
 
-El secreto `OCI_IMAGE_OCID` creado para la imagen x86 original ya no se usa en el workflow A1; puedes conservarlo para volver a E2 en el futuro.
-
-La configuración de la VM usa el primer availability domain devuelto por OCI. Tras errores de capacidad al crear `VM.Standard.E2.1.Micro` y A1 Flex de 6 GB en São Paulo, el workflow usa `VM.Standard.A1.Flex` con 1 OCPU y 2 GB de RAM, más una imagen ARM de Oracle Linux 8.10 para `sa-saopaulo-1`. El shape y la imagen se fijan en `.github/workflows/oci.yml`; ajusta ambos al cambiar de región o arquitectura. La configuración de memoria en `Terraform/main.tf` se aplica solo a A1 Flex. La disponibilidad de host sigue dependiendo de OCI.
+El workflow usa el secreto `OCI_IMAGE_OCID` con la imagen x86 original. La VM se configura como `VM.Standard.E4.Flex` con 1 OCPU y 1 GB de RAM, el mínimo del shape Flex. El shape y la imagen se fijan en `.github/workflows/oci.yml`; ajusta ambos al cambiar de región o arquitectura. La disponibilidad de host sigue dependiendo de OCI.
 
 ## Despliegue desde GitHub
 
