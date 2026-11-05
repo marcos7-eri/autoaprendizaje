@@ -35,7 +35,8 @@ jobs:
       OCI_STATE_BUCKET: ${{ secrets.OCI_STATE_BUCKET }}
       OCI_STATE_NAMESPACE: ${{ secrets.OCI_STATE_NAMESPACE }}
       TF_VAR_parent_compartment_ocid: ${{ secrets.OCI_PARENT_COMPARTMENT_OCID }}
-      TF_VAR_image_ocid: ${{ secrets.OCI_IMAGE_OCID }}
+      TF_VAR_image_ocid: "ocid1.image.oc1.sa-saopaulo-1.aaaaaaaacsccoglc53hnew4kabqluihun3y3zwchidu2gutjavvk7bvolyqa"
+      TF_VAR_shape: "VM.Standard.A1.Flex"
       TF_VAR_ssh_public_key: ${{ secrets.OCI_SSH_PUBLIC_KEY }}
       TF_VAR_ssh_source_cidr: ${{ secrets.OCI_SSH_SOURCE_CIDR }}
       TF_IN_AUTOMATION: "true"
