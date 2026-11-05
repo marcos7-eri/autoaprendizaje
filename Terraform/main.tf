@@ -72,6 +72,14 @@ resource "oci_core_instance" "vm" {
   display_name        = "${var.project_name}-vm"
   shape               = var.shape
 
+  dynamic "shape_config" {
+    for_each = var.shape == "VM.Standard.A1.Flex" ? [1] : []
+    content {
+      ocpus         = 1
+      memory_in_gbs = 6
+    }
+  }
+
   source_details {
     source_type = "image"
     source_id   = var.image_ocid
